@@ -24,7 +24,7 @@ public class Client extends JFrame {
 	private Socket client;
 
 	//Use local host and port 12345
-	private final String host = "127.0.0.1";
+	private final String host = "174.56.89.149";
 	private final int portNumber = 12345;
 	
 	private JTextField textField;
@@ -34,23 +34,19 @@ public class Client extends JFrame {
 		
 		super("Client");
 		
-		setLayout(new FlowLayout());
-		textField = new JTextField("Enter file name");
+		setLayout(null);
+		textField = new JTextField("Tell me something");
+		textField.setBounds(20,20,300,40);
 		textArea = new JTextArea();
+		textArea.setBounds(20,80,300,100);
+		
 		add(textField);
 		add(textArea);
 		
 		textField.addActionListener(
 			new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
-					String message = event.getActionCommand();
-					if (!message.equals("TERMINATE")) {
-						getAndSendFiles(event);
-						getAndPrintResult();
-					}
-					else {
-						closeConnection();
-					}
+					sendAndReceiveMessages(event);
 				}
 			}
 		); 
@@ -59,35 +55,34 @@ public class Client extends JFrame {
 		setVisible(true);
 	}
 	
-	private void getAndSendFiles(ActionEvent event) {
-		Scanner file = getFile(event.getActionCommand());
-		int rows = file.nextInt();
-		int cols = file.nextInt();
-					
-		int[][] matrix1 = matrixFromFile(rows, cols, file);
-		int[][] matrix2 = matrixFromFile(rows, cols, file);
-					
-		System.out.println("sending matrices");
-		sendData(matrix1);
-		sendData(matrix2);
-		System.out.println("sent");
-	}
-	
-	private void getAndPrintResult() {
-		int[][] result;
-		try {
-			result = (int[][]) input.readObject();
-			System.out.println("result received");
-			String matrixAsString = getString(result);
-			textArea.append("\n" + matrixAsString);
-		}
-		catch (IOException e) {
+	private void sendAndReceiveMessages(ActionEvent event) {
+		String clientMessage = event.getActionCommand();
+		if (!clientMessage.equals("TERMINATE")) {
+			
+			textField.setText("");
+			textField.update(textField.getGraphics());
+			String serverMessage;
+			
+			System.out.println("sending data");
+			textArea.append("\nMe: " + clientMessage);
+			textArea.update(textArea.getGraphics());
+			sendData(clientMessage);
+			
+			try {
+				System.out.println("waiting on reply");
+				serverMessage = (String)input.readObject();
+				textArea.append("\nServer: " + serverMessage);
+			}
+			catch (ClassNotFoundException e) {
+				System.out.println("what even causes this error?");
+				System.exit(1);
+			}
+			catch (IOException e) {
+				System.out.println("IOException");
+				System.exit(1);
+			}
 			
 		}
-		catch (ClassNotFoundException e) {
-			
-		}
-		
 	}
 	
 	
@@ -164,50 +159,5 @@ public class Client extends JFrame {
 		{
 			System.out.println("\nError writing object");
 		}
-	}
-	
-	
-	
-	// copied this from readwritedata.java
-	private Scanner getFile(String fileName) {
-		File file = new File(fileName);
-		Scanner input = null;
-		try {
-			input = new Scanner(file);
-		} catch (FileNotFoundException e) {
-			System.out.printf("%nError on file: %s (either enpty or wrong file format)%n%n", file); 
-			System.exit(1);
-		}
-		
-		return input;
-	}
-	
-	// copied this from my matrix addition
-	public static int[][] matrixFromFile(int rows, int cols, Scanner fileReader) {
-		int[][] matrix = new int[rows][cols];
-		
-		for (int r = 0; r < rows; r++) {
-			for (int c = 0; c < cols; c++) {
-				// read in the values and put in the proper places in the array
-				matrix[r][c] = fileReader.nextInt();
-			}
-		}
-		
-		return matrix;
-	}
-	
-	// get string of a given matrix
-	private String getString(int[][] array) {
-		String result = "";
-		
-		for (int row = 0; row < array.length; row++) {
-			for (int col = 0; col < array[row].length; col++) {
-				// add each number
-				result = result + String.format("%-4d", array[row][col]);
-			}
-			// new line for every row
-			result = result + "\n";
-		}
-		return result;
 	}
 }

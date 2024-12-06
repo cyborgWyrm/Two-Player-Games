@@ -4,6 +4,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Server {
 	
@@ -14,6 +15,8 @@ public class Server {
 
 	private final int portNumber = 12345;
 	private final int backlogLimit = 100;
+	
+	private Scanner terminal;
 	
 	
 	// wrote this while looking at teachers reference code
@@ -66,50 +69,26 @@ public class Server {
 	// these methods were also copied from intructor's server.java, but will
 	// require modification.
 	private void processConnection() throws IOException {
-		while (true) {
+		
+		terminal = new Scanner(System.in);
+		
+		Object clientMessage = "";
+		Object serverMessage = "";
+		while (!clientMessage.equals("TERMINATE")) {
+			
 			try {
-				int[][] matrix1 = (int[][]) input.readObject();
-				int[][] matrix2 = (int[][]) input.readObject();
-				print2dArray(matrix1);
-				System.out.println();
-				print2dArray(matrix2);
-				System.out.println();
-				
-				int[][] resultMatrix = new int[matrix1.length][matrix1[0].length];
-				
-				// Create all four threads
-				ThreadOperation thread0 = new ThreadOperation(matrix1, matrix2, "AA", resultMatrix);
-				ThreadOperation thread1 = new ThreadOperation(matrix1, matrix2, "AB", resultMatrix);
-				ThreadOperation thread2 = new ThreadOperation(matrix1, matrix2, "BA", resultMatrix);
-				ThreadOperation thread3 = new ThreadOperation(matrix1, matrix2, "BB", resultMatrix);
-				
-				// Start all four threads running
-				thread0.start();
-				thread1.start();
-				thread2.start();
-				thread3.start();
-				
-				// wait for all four threads to complete
-				try {
-					thread0.join();
-					thread1.join();
-					thread2.join();
-					thread3.join();
-				}
-				catch (InterruptedException e) {
-					
-				}
-				
-				
-				// print out the resulting matrix
-				System.out.println("Added together equals:");
-				print2dArray(resultMatrix);
-				
-				sendData(resultMatrix);
+				System.out.println("waiting on client");
+				clientMessage = input.readObject();
+				System.out.println("CLIENT: " + (String)clientMessage + "\n");
 			}
 			catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				System.out.println("Class wasnt found or some shit");
+				System.exit(1);
 			}
+			
+			System.out.print("SERVER: ");
+			serverMessage = terminal.nextLine();
+			sendData(serverMessage);
 		}
 		
 	}
@@ -142,20 +121,6 @@ public class Server {
 		catch (IOException e) 
 		{
 			System.out.println("\nError writing object");
-		}
-	}
-	
-	
-	
-	// print out a given matrix (taken from matrixaddition)
-	public static void print2dArray(int[][] array) {
-		for (int row = 0; row < array.length; row++) {
-			for (int col = 0; col < array[row].length; col++) {
-				// print out each number
-				System.out.printf("%-4d", array[row][col]);
-			}
-			// new line for every row
-			System.out.println();
 		}
 	}
 	
